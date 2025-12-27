@@ -5,6 +5,7 @@ import { CategoryList } from '@/components/categories/CategoryList';
 import { ArticleListCard } from '@/components/articles/ArticleListCard';
 import { CreateArticleModal } from '@/components/articles/CreateArticleModal';
 import { UserArticlesModal } from '@/components/profile/UserArticlesModal';
+import { AllArticlesModal } from '@/components/articles/AllArticlesModal';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronRight, FileText } from 'lucide-react';
 import { mockArticles, mockCategories, currentUser } from '@/data/mockData';
@@ -13,15 +14,13 @@ import { Category, Article } from '@/types';
 export default function Hub() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [showAllArticles, setShowAllArticles] = useState(false);
   const [isMyArticlesOpen, setIsMyArticlesOpen] = useState(false);
+  const [isAllArticlesOpen, setIsAllArticlesOpen] = useState(false);
+  const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
 
   const filteredArticles = selectedCategory
     ? mockArticles.filter((a) => a.category_id === selectedCategory.id)
     : mockArticles;
-
-  // Show only first 5 articles unless "show all" is clicked
-  const displayedArticles = showAllArticles ? filteredArticles : filteredArticles.slice(0, 5);
 
   // Mock user articles - some approved, some pending
   const userArticles: Article[] = mockArticles
@@ -30,6 +29,10 @@ export default function Hub() {
       ...a,
       status: index === 0 ? 'pending' as const : 'approved' as const,
     }));
+
+  const handleArticleClick = (articleId: string) => {
+    setExpandedArticleId(expandedArticleId === articleId ? null : articleId);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-16">
@@ -61,13 +64,15 @@ export default function Hub() {
           <div className="rounded-2xl bg-card p-4">
             <h2 className="mb-4 font-heading text-lg font-semibold">Статьи</h2>
             <div className="space-y-3">
-              {displayedArticles.length > 0 ? (
-                displayedArticles.map((article, index) => (
+              {filteredArticles.length > 0 ? (
+                filteredArticles.slice(0, 5).map((article, index) => (
                   <ArticleListCard
                     key={article.id}
                     article={article}
                     className="animate-slide-up"
                     style={{ animationDelay: `${index * 50}ms` }}
+                    onClick={() => handleArticleClick(article.id)}
+                    isExpanded={expandedArticleId === article.id}
                   />
                 ))
               ) : (
@@ -78,11 +83,11 @@ export default function Hub() {
             </div>
 
             {/* Show all button */}
-            {filteredArticles.length > 5 && !showAllArticles && (
+            {filteredArticles.length > 5 && (
               <Button
                 variant="outline"
                 className="mt-4 w-full gap-2"
-                onClick={() => setShowAllArticles(true)}
+                onClick={() => setIsAllArticlesOpen(true)}
               >
                 Смотреть все
                 <ChevronRight className="h-4 w-4" />
@@ -131,6 +136,8 @@ export default function Hub() {
                     showStatus
                     className="animate-slide-up"
                     style={{ animationDelay: `${index * 50}ms` }}
+                    onClick={() => handleArticleClick(article.id)}
+                    isExpanded={expandedArticleId === article.id}
                   />
                 ))}
               </div>
@@ -150,6 +157,13 @@ export default function Hub() {
         isOpen={isMyArticlesOpen}
         onClose={() => setIsMyArticlesOpen(false)}
         articles={userArticles}
+      />
+
+      <AllArticlesModal
+        isOpen={isAllArticlesOpen}
+        onClose={() => setIsAllArticlesOpen(false)}
+        articles={filteredArticles}
+        title={selectedCategory ? `Статьи: ${selectedCategory.name}` : 'Все статьи'}
       />
     </div>
   );

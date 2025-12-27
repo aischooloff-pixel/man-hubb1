@@ -6,9 +6,10 @@ import { SettingsModal } from '@/components/profile/SettingsModal';
 import { PremiumModal } from '@/components/profile/PremiumModal';
 import { UserArticlesModal } from '@/components/profile/UserArticlesModal';
 import { ReputationHistoryModal } from '@/components/profile/ReputationHistoryModal';
+import { SocialLinksModal } from '@/components/profile/SocialLinksModal';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Crown, FileText, Bookmark, History, Star } from 'lucide-react';
+import { Settings, Crown, FileText, Bookmark, History, Star, Send, Globe, ExternalLink } from 'lucide-react';
 import { currentUser as mockUser, mockArticles } from '@/data/mockData';
 import { useTelegram } from '@/hooks/use-telegram';
 
@@ -19,6 +20,13 @@ export default function Profile() {
   const [isPremiumOpen, setIsPremiumOpen] = useState(false);
   const [isArticlesOpen, setIsArticlesOpen] = useState(false);
   const [isRepHistoryOpen, setIsRepHistoryOpen] = useState(false);
+  const [isSocialLinksOpen, setIsSocialLinksOpen] = useState(false);
+  
+  // Mock social links state
+  const [socialLinks, setSocialLinks] = useState({
+    telegram: '@mychannel',
+    website: 'https://mysite.com'
+  });
 
   const currentUser = tgUser ? {
     ...mockUser,
@@ -31,6 +39,10 @@ export default function Profile() {
 
   const userArticles = mockArticles.filter((a) => a.author_id === currentUser.id);
   const favoriteArticles = mockArticles.slice(0, 3);
+
+  const handleSaveSocialLinks = (telegram: string, website: string) => {
+    setSocialLinks({ telegram, website });
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-16">
@@ -75,6 +87,42 @@ export default function Profile() {
                   </span>
                 </button>
               </div>
+              
+              {/* Social Links for Premium Users */}
+              {currentUser.is_premium && (
+                <div className="mt-3 flex items-center gap-3">
+                  {socialLinks.telegram && (
+                    <a
+                      href={socialLinks.telegram.startsWith('@') 
+                        ? `https://t.me/${socialLinks.telegram.slice(1)}` 
+                        : socialLinks.telegram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Send className="h-3 w-3" />
+                      <span>{socialLinks.telegram}</span>
+                    </a>
+                  )}
+                  {socialLinks.website && (
+                    <a
+                      href={socialLinks.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Globe className="h-3 w-3" />
+                      <span className="max-w-[120px] truncate">{socialLinks.website.replace(/^https?:\/\//, '')}</span>
+                    </a>
+                  )}
+                  <button
+                    onClick={() => setIsSocialLinksOpen(true)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Изменить
+                  </button>
+                </div>
+              )}
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
               <Settings className="h-5 w-5" />
@@ -189,6 +237,13 @@ export default function Profile() {
       <ReputationHistoryModal
         isOpen={isRepHistoryOpen}
         onClose={() => setIsRepHistoryOpen(false)}
+      />
+      <SocialLinksModal
+        isOpen={isSocialLinksOpen}
+        onClose={() => setIsSocialLinksOpen(false)}
+        initialTelegram={socialLinks.telegram}
+        initialWebsite={socialLinks.website}
+        onSave={handleSaveSocialLinks}
       />
     </div>
   );

@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 
 interface PremiumBannerProps {
   className?: string;
+  onClick?: () => void;
 }
 
-export function PremiumBanner({ className }: PremiumBannerProps) {
+export function PremiumBanner({ className, onClick }: PremiumBannerProps) {
   const features = [
     { icon: Infinity, label: 'Безлимит публикаций' },
     { icon: Zap, label: 'Приоритетная модерация' },
@@ -16,9 +17,10 @@ export function PremiumBanner({ className }: PremiumBannerProps) {
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-lg mx-4',
+        'relative overflow-hidden rounded-lg mx-4 cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]',
         className
       )}
+      onClick={onClick}
     >
       {/* Background with gradient */}
       <div className="absolute inset-0 premium-gradient" />

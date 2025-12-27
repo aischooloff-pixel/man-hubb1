@@ -7,6 +7,8 @@ import { PremiumBanner } from '@/components/premium/PremiumBanner';
 import { CategoryList } from '@/components/categories/CategoryList';
 import { TelegramCTA } from '@/components/cta/TelegramCTA';
 import { ArticleCard } from '@/components/articles/ArticleCard';
+import { PremiumModal } from '@/components/profile/PremiumModal';
+import { WelcomeModal, useWelcomeModal } from '@/components/welcome/WelcomeModal';
 import {
   mockArticles,
   mockPodcasts,
@@ -19,6 +21,8 @@ import { useTelegram } from '@/hooks/use-telegram';
 export default function Index() {
   const { user: tgUser } = useTelegram();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [isPremiumOpen, setIsPremiumOpen] = useState(false);
+  const { showWelcome, closeWelcome } = useWelcomeModal();
 
   const currentUser = tgUser ? {
     ...mockUser,
@@ -77,7 +81,12 @@ export default function Index() {
         />
 
         {/* Premium Banner */}
-        {!currentUser.is_premium && <PremiumBanner className="mb-8" />}
+        {!currentUser.is_premium && (
+          <PremiumBanner 
+            className="mb-8" 
+            onClick={() => setIsPremiumOpen(true)}
+          />
+        )}
 
         {/* Latest Articles */}
         <section className="mb-8 px-4">
@@ -101,6 +110,10 @@ export default function Index() {
       </main>
 
       <BottomNav />
+      
+      <PremiumModal isOpen={isPremiumOpen} onClose={() => setIsPremiumOpen(false)} />
+      
+      {showWelcome && <WelcomeModal onClose={closeWelcome} />}
     </div>
   );
 }

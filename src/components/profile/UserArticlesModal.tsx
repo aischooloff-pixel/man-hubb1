@@ -50,21 +50,12 @@ export function UserArticlesModal({
     <div className="fixed inset-0 z-[100]">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-background/95 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div
-        className={cn(
-          'absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-2xl bg-card animate-slide-up',
-          'md:inset-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl'
-        )}
-      >
-        {/* Handle bar for mobile */}
-        <div className="flex shrink-0 justify-center bg-card pt-3 md:hidden">
-          <div className="h-1 w-12 rounded-full bg-border" />
-        </div>
+      {/* Modal - Nearly fullscreen */}
+      <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col bg-card animate-fade-in md:inset-4 md:rounded-2xl">
 
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border bg-card p-4">
