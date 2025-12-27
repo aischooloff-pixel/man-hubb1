@@ -230,7 +230,10 @@ CREATE TABLE public.profiles (
     telegram_channel text,
     website text,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    show_avatar boolean DEFAULT true NOT NULL,
+    show_name boolean DEFAULT true NOT NULL,
+    show_username boolean DEFAULT true NOT NULL
 );
 
 
@@ -493,35 +496,10 @@ CREATE POLICY "Admins can view all roles" ON public.user_roles FOR SELECT USING 
 
 
 --
--- Name: profiles Anyone can insert profiles; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Anyone can insert profiles" ON public.profiles FOR INSERT WITH CHECK (true);
-
-
---
 -- Name: articles Approved articles are viewable by everyone; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Approved articles are viewable by everyone" ON public.articles FOR SELECT USING (((status = 'approved'::text) OR (author_id IN ( SELECT profiles.id
-   FROM public.profiles
-  WHERE (profiles.user_id = auth.uid())))));
-
-
---
--- Name: articles Authenticated users can insert articles; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Authenticated users can insert articles" ON public.articles FOR INSERT WITH CHECK ((author_id IN ( SELECT profiles.id
-   FROM public.profiles)));
-
-
---
--- Name: articles Authors can update own articles; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Authors can update own articles" ON public.articles FOR UPDATE USING ((author_id IN ( SELECT profiles.id
-   FROM public.profiles)));
+CREATE POLICY "Approved articles are viewable by everyone" ON public.articles FOR SELECT USING ((status = 'approved'::text));
 
 
 --
@@ -539,10 +517,31 @@ CREATE POLICY "Profiles are viewable by everyone" ON public.profiles FOR SELECT 
 
 
 --
--- Name: profiles Profiles can be updated by owner; Type: POLICY; Schema: public; Owner: -
+-- Name: articles Service role can insert articles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Profiles can be updated by owner" ON public.profiles FOR UPDATE USING (true);
+CREATE POLICY "Service role can insert articles" ON public.articles FOR INSERT TO service_role WITH CHECK (true);
+
+
+--
+-- Name: profiles Service role can insert profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Service role can insert profiles" ON public.profiles FOR INSERT TO service_role WITH CHECK (true);
+
+
+--
+-- Name: articles Service role can update articles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Service role can update articles" ON public.articles FOR UPDATE TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: profiles Service role can update profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Service role can update profiles" ON public.profiles FOR UPDATE TO service_role USING (true) WITH CHECK (true);
 
 
 --
@@ -567,12 +566,10 @@ CREATE POLICY "Service role only" ON public.pending_rejections USING (false);
 
 
 --
--- Name: reputation_history Users can view own reputation history; Type: POLICY; Schema: public; Owner: -
+-- Name: reputation_history Service role only; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view own reputation history" ON public.reputation_history FOR SELECT USING ((user_id IN ( SELECT profiles.id
-   FROM public.profiles
-  WHERE (profiles.user_id = auth.uid()))));
+CREATE POLICY "Service role only" ON public.reputation_history TO service_role USING (true) WITH CHECK (true);
 
 
 --
