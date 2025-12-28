@@ -124,7 +124,7 @@ async function handleSupportQuestion(chatId: number, user: any, text: string) {
     .eq('telegram_id', user.id)
     .maybeSingle();
   
-  // Save question to database
+  // Save question to database (for history)
   const { data: question, error } = await supabase
     .from('support_questions')
     .insert({
@@ -138,8 +138,6 @@ async function handleSupportQuestion(chatId: number, user: any, text: string) {
   
   if (error) {
     console.error('Error saving support question:', error);
-    await sendTelegramMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
-    return;
   }
   
   // Send confirmation to user
@@ -147,16 +145,22 @@ async function handleSupportQuestion(chatId: number, user: any, text: string) {
 
 Мы ответим вам в ближайшее время. Ожидайте ответа в этом чате.`);
   
-  // Notify admin via admin bot
+  // Notify admin via admin bot with answer button
   const adminMessage = `❓ <b>Новый вопрос в поддержку</b>
 
 👤 <b>От:</b> ${user.first_name || 'User'} ${user.username ? `(@${user.username})` : ''}
 🆔 <b>Telegram ID:</b> ${user.id}
 
 📝 <b>Вопрос:</b>
-${text}
+${text}`;
 
-<i>Чтобы ответить, используйте функцию "Ответить" на это сообщение.</i>`;
+  // Create keyboard with answer button - include telegram_id and question_id
+  const questionId = question?.id?.substring(0, 8) || 'none';
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: '💬 Ответить', callback_data: `support_answer:${user.id}:${questionId}` }]
+    ]
+  };
 
   // Send to admin via ADMIN bot
   const ADMIN_BOT_TOKEN = Deno.env.get('ADMIN_BOT_TOKEN')!;
@@ -167,13 +171,15 @@ ${text}
       chat_id: TELEGRAM_ADMIN_CHAT_ID,
       text: adminMessage,
       parse_mode: 'HTML',
+      reply_markup: keyboard,
     }),
   });
   
   const adminResult = await adminResponse.json();
+  console.log('Admin notification result:', adminResult);
   
-  // Save admin message ID for reply tracking
-  if (adminResult.ok && adminResult.result?.message_id) {
+  // Save admin message ID for reference
+  if (adminResult.ok && adminResult.result?.message_id && question) {
     await supabase
       .from('support_questions')
       .update({ admin_message_id: adminResult.result.message_id })

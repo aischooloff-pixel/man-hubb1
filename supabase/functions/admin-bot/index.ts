@@ -1093,22 +1093,132 @@ async function handleQuestions(chatId: number, userId: number) {
     return;
   }
 
-  // Create inline buttons for each question
-  const buttons = questions.map(q => {
-    const shortQuestion = q.question.length > 30 
-      ? q.question.substring(0, 30) + '...' 
-      : q.question;
-    return [{ text: `❓ ${shortQuestion}`, callback_data: `question:${q.id.substring(0, 8)}` }];
-  });
+  // Show each question with answer button
+  for (const q of questions) {
+    // Get user profile for display
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, first_name')
+      .eq('telegram_id', q.user_telegram_id)
+      .maybeSingle();
 
-  const keyboard = {
-    inline_keyboard: buttons,
-  };
+    const userDisplay = profile?.username ? `@${profile.username}` : `ID:${q.user_telegram_id}`;
+    const userName = profile?.first_name || 'User';
 
-  await sendAdminMessage(chatId, `❓ <b>Вопросы в поддержку (${questions.length}):</b>\n\n<i>Нажмите на вопрос, чтобы открыть его. Для ответа используйте функцию "Ответить" (свайп влево) на сообщение с вопросом.</i>`, { reply_markup: keyboard });
+    const questionMessage = `❓ <b>Вопрос в поддержку</b>
+
+👤 <b>От:</b> ${userName} (${userDisplay})
+🆔 <b>Telegram ID:</b> ${q.user_telegram_id}
+
+📝 <b>Вопрос:</b>
+${q.question}`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: '💬 Ответить', callback_data: `support_answer:${q.user_telegram_id}:${q.id.substring(0, 8)}` }]
+      ]
+    };
+
+    await sendAdminMessage(chatId, questionMessage, { reply_markup: keyboard });
+  }
 }
 
-// Handle question view callback
+// Handle support answer button click - start answer mode
+async function handleSupportAnswerStart(callbackQuery: any, userTelegramId: string, questionShortId: string) {
+  const { id, message, from } = callbackQuery;
+
+  // Store pending answer state
+  await supabase.from('admin_settings').upsert({
+    key: `pending_support_answer_${from.id}`,
+    value: JSON.stringify({ userTelegramId, questionShortId, messageId: message.message_id }),
+  });
+
+  await answerCallbackQuery(id, '📝 Напишите ответ');
+  await sendAdminMessage(message.chat.id, `📝 <b>Напишите ответ пользователю</b> (ID: ${userTelegramId})\n\n<i>Следующее ваше сообщение будет отправлено как ответ.</i>`);
+}
+
+// Handle pending support answer
+async function handlePendingSupportAnswer(chatId: number, userId: number, text: string): Promise<boolean> {
+  const { data: pending, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', `pending_support_answer_${userId}`)
+    .maybeSingle();
+
+  if (error || !pending) return false;
+
+  let answerData;
+  try {
+    answerData = JSON.parse(pending.value || '{}');
+  } catch {
+    return false;
+  }
+
+  const { userTelegramId, questionShortId } = answerData;
+  if (!userTelegramId) return false;
+
+  console.log('Sending support answer to user:', userTelegramId);
+
+  // Get original question for context
+  let originalQuestion = '';
+  if (questionShortId && questionShortId !== 'none') {
+    const { data: q } = await supabase
+      .from('support_questions')
+      .select('id, question')
+      .ilike('id', `${questionShortId}%`)
+      .maybeSingle();
+    
+    if (q) {
+      originalQuestion = q.question;
+      // Update question status
+      await supabase
+        .from('support_questions')
+        .update({
+          answer: text,
+          answered_by_telegram_id: userId,
+          status: 'answered',
+          answered_at: new Date().toISOString(),
+        })
+        .eq('id', q.id);
+    }
+  }
+
+  // Send answer to user
+  const userMessage = originalQuestion 
+    ? `💬 <b>Ответ от поддержки BoysHub</b>
+
+<b>Ваш вопрос:</b>
+${originalQuestion}
+
+<b>Ответ:</b>
+${text}
+
+<i>Если у вас есть ещё вопросы, напишите в бот.</i>`
+    : `💬 <b>Ответ от поддержки BoysHub</b>
+
+${text}
+
+<i>Если у вас есть ещё вопросы, напишите в бот.</i>`;
+
+  const sendResult = await sendUserMessage(parseInt(userTelegramId), userMessage);
+  console.log('Send result:', sendResult);
+
+  // Clear pending state
+  await supabase
+    .from('admin_settings')
+    .delete()
+    .eq('key', `pending_support_answer_${userId}`);
+
+  if (sendResult.ok) {
+    await sendAdminMessage(chatId, `✅ Ответ отправлен пользователю ${userTelegramId}`);
+  } else {
+    await sendAdminMessage(chatId, `❌ Не удалось отправить ответ: ${sendResult.description || 'ошибка'}`);
+  }
+
+  return true;
+}
+
+// Handle question view callback (legacy - now with button)
 async function handleViewQuestion(callbackQuery: any, questionShortId: string) {
   const { id, message, from } = callbackQuery;
 
@@ -1127,33 +1237,28 @@ async function handleViewQuestion(callbackQuery: any, questionShortId: string) {
   // Get user profile for username
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, telegram_id')
+    .select('username, first_name')
     .eq('telegram_id', question.user_telegram_id)
     .maybeSingle();
 
   const userDisplay = profile?.username ? `@${profile.username}` : `ID:${question.user_telegram_id}`;
 
-  const questionMessage = `❓ <b>Новый вопрос в поддержку</b>
+  const questionMessage = `❓ <b>Вопрос в поддержку</b>
 
-👤 <b>От:</b> ${userDisplay}
+👤 <b>От:</b> ${profile?.first_name || 'User'} (${userDisplay})
 🆔 <b>Telegram ID:</b> ${question.user_telegram_id}
 
 📝 <b>Вопрос:</b>
-${question.question}
+${question.question}`;
 
-<i>Чтобы ответить, используйте функцию "Ответить" на это сообщение.</i>`;
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: '💬 Ответить', callback_data: `support_answer:${question.user_telegram_id}:${question.id.substring(0, 8)}` }]
+    ]
+  };
 
   await answerCallbackQuery(id);
-  
-  const result = await sendAdminMessage(message.chat.id, questionMessage);
-  
-  // Save message ID for reply tracking
-  if (result.ok && result.result?.message_id) {
-    await supabase
-      .from('support_questions')
-      .update({ admin_message_id: result.result.message_id })
-      .eq('id', question.id);
-  }
+  await sendAdminMessage(message.chat.id, questionMessage, { reply_markup: keyboard });
 }
 
 // Handle reply to support question
@@ -1420,6 +1525,8 @@ async function handleCallbackQuery(callbackQuery: any) {
     await handleUnblockUser(callbackQuery, param);
   } else if (action === 'question') {
     await handleViewQuestion(callbackQuery, param);
+  } else if (action === 'support_answer') {
+    await handleSupportAnswerStart(callbackQuery, param, param2 || 'none');
   } else if (action === 'articles') {
     await answerCallbackQuery(callbackQuery.id);
     await handleArticles(message.chat.id, from.id, parseInt(param), message.message_id);
@@ -1528,7 +1635,13 @@ Deno.serve(async (req) => {
       } else if (text === '/help') {
         await handleStart(chat.id, from.id);
       } else {
-        // Check if this is a reply to a support question
+        // Check if this is a pending support answer
+        const supportHandled = await handlePendingSupportAnswer(chat.id, from.id, text);
+        if (supportHandled) {
+          return new Response('OK', { headers: corsHeaders });
+        }
+
+        // Check if this is a reply to a support question (legacy)
         const replyToMessageId = update.message.reply_to_message?.message_id;
         if (replyToMessageId) {
           const handled = await handleSupportReply(chat.id, from.id, text, replyToMessageId);
