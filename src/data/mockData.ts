@@ -84,6 +84,7 @@ export const mockCategories: Category[] = [
   { id: '8', name: 'Женщины', slug: 'women', icon: '👩', topics_count: 0 },
   { id: '9', name: 'Спорт', slug: 'sport', icon: '⚽', topics_count: 0 },
   { id: '10', name: 'Работа', slug: 'work', icon: '💻', topics_count: 0 },
+  { id: '11', name: 'Окружение', slug: 'environment', icon: '👥', topics_count: 0 },
 ];
 
 export const mockTopics: Topic[] = [

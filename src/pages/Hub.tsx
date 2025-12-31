@@ -6,7 +6,7 @@ import { ArticleListCard } from '@/components/articles/ArticleListCard';
 import { CreateArticleModal } from '@/components/articles/CreateArticleModal';
 import { EditArticleModal } from '@/components/articles/EditArticleModal';
 import { UserArticlesModal } from '@/components/profile/UserArticlesModal';
-import { AllArticlesModal } from '@/components/articles/AllArticlesModal';
+import { FullArticlesModal } from '@/components/articles/FullArticlesModal';
 import { ArticleDetailModal } from '@/components/articles/ArticleDetailModal';
 import { UpgradeToPlusModal } from '@/components/profile/UpgradeToPlusModal';
 import { Button } from '@/components/ui/button';
@@ -176,11 +176,9 @@ export default function Hub() {
                 )) : <p className="py-8 text-center text-muted-foreground">Нет статей</p>}
               </div>
             )}
-            {filteredArticles.length > 5 && (
-              <Button variant="outline" className="mt-4 w-full gap-2" onClick={() => setIsAllArticlesOpen(true)}>
-                Смотреть все <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
+            <Button variant="outline" className="mt-4 w-full gap-2" onClick={() => setIsAllArticlesOpen(true)}>
+              Смотреть все <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </section>
 
@@ -232,7 +230,7 @@ export default function Hub() {
         onEditClick={(a) => { setIsMyArticlesOpen(false); setEditingArticle(a); }}
         onDeleteClick={handleDeleteArticle}
       />
-      <AllArticlesModal isOpen={isAllArticlesOpen} onClose={() => setIsAllArticlesOpen(false)} articles={filteredArticles.map(mapArticle)} title={selectedCategory ? `Статьи: ${selectedCategory.name}` : 'Все статьи'} />
+      <FullArticlesModal isOpen={isAllArticlesOpen} onClose={() => setIsAllArticlesOpen(false)} initialArticles={allArticles.map(mapArticle)} initialCategory={selectedCategory} />
       <ArticleDetailModal isOpen={!!selectedArticle} onClose={() => setSelectedArticle(null)} article={selectedArticle} />
       <UpgradeToPlusModal isOpen={isUpgradeOpen} onClose={() => setIsUpgradeOpen(false)} feature="articles" />
     </div>
