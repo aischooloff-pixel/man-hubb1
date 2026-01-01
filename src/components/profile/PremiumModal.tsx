@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Check, Crown, Sparkles, MessageCircle, Users, Infinity, BadgeCheck, Bot, FileText, Headphones, Music, ShoppingBag, GraduationCap, ChevronLeft, ChevronRight, Tag, Loader2, ArrowLeft, HelpCircle } from 'lucide-react';
+import sbpLogo from '@/assets/sbp-logo.jpeg';
+import cryptobotLogo from '@/assets/cryptobot-logo.png';
+import telegramStarsLogo from '@/assets/telegram-stars-logo.jpeg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -214,56 +217,19 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
       id: 'sbp',
       name: 'СБП',
       description: 'Система быстрых платежей',
-      logo: (
-        <svg viewBox="0 0 32 32" className="h-8 w-8">
-          <circle cx="16" cy="16" r="16" fill="#1D1D1B"/>
-          <path d="M16 6L8 10.5V21.5L16 26L24 21.5V10.5L16 6Z" fill="url(#sbp-gradient)"/>
-          <path d="M16 6V16L24 10.5L16 6Z" fill="#5B57A2"/>
-          <path d="M16 16V26L24 21.5V10.5L16 16Z" fill="#D90751"/>
-          <path d="M8 10.5L16 16V6L8 10.5Z" fill="#FAB718"/>
-          <path d="M8 21.5L16 16V26L8 21.5Z" fill="#0F8F41"/>
-          <path d="M8 10.5V21.5L16 16L8 10.5Z" fill="#1D83B4"/>
-          <defs>
-            <linearGradient id="sbp-gradient" x1="8" y1="16" x2="24" y2="16">
-              <stop stopColor="#FAB718"/>
-              <stop offset="0.5" stopColor="#0F8F41"/>
-              <stop offset="1" stopColor="#D90751"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      ),
+      logo: sbpLogo,
     },
     {
       id: 'crypto',
       name: 'Крипта',
       description: 'CryptoBot',
-      logo: (
-        <svg viewBox="0 0 32 32" className="h-8 w-8">
-          <circle cx="16" cy="16" r="16" fill="#0088CC"/>
-          <path d="M22.5 10.5L16 7L9.5 10.5V17.5L16 21L22.5 17.5V10.5Z" fill="white"/>
-          <path d="M16 13V17M14 14.5H18M12 12L16 14L20 12" stroke="#0088CC" strokeWidth="1.2" strokeLinecap="round"/>
-          <circle cx="16" cy="15" r="4" fill="none" stroke="white" strokeWidth="1"/>
-          <path d="M13 22L16 24L19 22" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
-        </svg>
-      ),
+      logo: cryptobotLogo,
     },
     {
       id: 'stars',
       name: 'Telegram Stars',
       description: 'Звёзды Telegram',
-      logo: (
-        <svg viewBox="0 0 32 32" className="h-8 w-8">
-          <circle cx="16" cy="16" r="16" fill="url(#stars-bg)"/>
-          <path d="M16 6L18.5 13H26L20 17.5L22.5 25L16 20.5L9.5 25L12 17.5L6 13H13.5L16 6Z" fill="#FFD700"/>
-          <path d="M16 9L17.8 14H23L18.6 17L20.4 22L16 18.8L11.6 22L13.4 17L9 14H14.2L16 9Z" fill="#FFF8DC"/>
-          <defs>
-            <linearGradient id="stars-bg" x1="0" y1="0" x2="32" y2="32">
-              <stop stopColor="#6B5CE7"/>
-              <stop offset="1" stopColor="#A855F7"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      ),
+      logo: telegramStarsLogo,
     },
   ];
 
@@ -354,7 +320,7 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
                       className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 cursor-default"
                     >
                       <div className="flex-shrink-0">
-                        {method.logo}
+                        <img src={method.logo} alt={method.name} className="h-10 w-10 rounded-lg object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium">{method.name}</p>
