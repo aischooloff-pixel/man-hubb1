@@ -552,7 +552,6 @@ async function handleBadgeMenu(callbackQuery: any, telegramId: string) {
     { key: 'founder', name: '👑 Основатель' },
     { key: 'moderator_badge', name: '🛡️ Модератор' },
     { key: 'partner', name: '🤝 Партнёр' },
-    { key: 'sage', name: '🧙 Мудрец (1000 RP)' },
   ];
 
   const userName = user.username ? `@${user.username}` : user.first_name || `ID:${telegramId}`;
